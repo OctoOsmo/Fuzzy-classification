@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <iostream> 
 #include <vector>
 #include <cmath>
 
@@ -32,6 +33,33 @@ void PrintMatrix(std::vector<std::vector<double> > &in, const char *str){
         printf("\n");
     }
 }
+//
+//void PrintMatrixd(std::vector<std::vector<int> > &M, const char *str)
+//{
+//	printf(str);
+//    for(int i = 0; i < M.size(); ++i)
+//    {
+//        for(int j = 0; j < M.size(); ++j)
+//        {
+//           std::cout << M[i][j] << " ";
+//        }
+//         std::cout << "\n";
+//    }
+//}
+
+template <class T> void PrintMatrixT(std::vector<std::vector<T> > &M, const char *str)
+{
+	std::cout << str;
+    for(int i = 0; i < M.size(); ++i)
+    {
+        for(int j = 0; j < M.size(); ++j)
+        {
+           std::cout << M[i][j] << " ";
+        }
+         std::cout << "\n";
+    }
+}
+
 
 double Hemming(std::vector<double> &A, std::vector<double> &B)
 {
@@ -72,6 +100,7 @@ std::vector<std::vector<double> > HemmingMatrix(std::vector<std::vector<double> 
     return R;
 }
 
+
 std::vector<std::vector<double> > MinMaxComposition(const std::vector<std::vector<double> > &R0, const std::vector<std::vector<double> > &R)
 {
 	std::vector<std::vector<double> > R_2(R.size());
@@ -109,6 +138,8 @@ bool VecCmp(const std::vector<std::vector<double> > &R1, const std::vector<std::
 	return flag;
 }
 
+////////////////////////////////////////
+//@ MinMax transitive closure computing
 std::vector<std::vector<double> > MinMaxTransitiveClosure(const std::vector<std::vector<double> > &R)
 {
 	int N = R.size();
@@ -150,40 +181,53 @@ std::vector<std::vector<int> > AlphaLevel(const std::vector<std::vector<double> 
 int GetNextOne(std::vector<int> v, int &k)
 {
 	int i = k;
-	while(v[i++] == 0 && i <= v.size());
+	while(v[i++] != 0 && i <= v.size());
 
 	if(i > v.size()) return -1;
 	else return i;
 
 }
 
-void Swap(std::vector<std::vector<int> > &R, &k`
+void RowColSwap(std::vector<std::vector<int> > &R, int i, int j)
 {
-	int N = R.size();
-	for(int i = 0; i < N; ++i)
-		for(int j =0; j < N; ++j)
+	std::swap(R[i], R[j]);
+	for(int k = 0; k < R.size(); ++k)
+		std::swap(R[k][i], R[k][j]);
 
 }
 
-void DecompositionTree(std::vector<std::vector<int> > &R)
+//////////////////////////////////////
+//@brief function making block matrix from matrix R
+void BlockMatrix(std::vector<std::vector<int> > &R)
 {
 	int N = R.size();
-	std::vector<int> transp(N);
 
-	for(int i = 0; i < N; ++i)
-		transp[i] = i;
-
-	for(int i = 0; i < N; ++i)
+	int i0 = 0, i1, row = 0;
+	while(row < N - 2)
 	{
-		for(int j = 0; j < N - i; ++j)
-		{
-			if(GetNextOne(R[i], j)
+		while((R[row][++i0] != 0) && (i0 < N-2));
 
-				
-		}
+		if(R[row][i0] == 0)
+		{
+			i1 = i0;
+			while((R[row][++i1] != 1) && (i1 < N-1));
+
+			if(R[row][i1] == 1)
+			{
+				RowColSwap(R, i0, i1);
+			}
+			else row = i0;
+			
+		} 
+		else row = i0;
 	}
+
+	PrintMatrixT(R, "\nBlock matrix:\n");
 }
 
+
+/////////////////////////////////
+//@brief main
 int main (void)
 {
     std::vector<std::vector<double> > in;
@@ -201,9 +245,11 @@ int main (void)
 
 	RelationNegation(R_hated);
 
-	Ra = AlphaLevel(R_hated, 1);
 
-
+	Ra = AlphaLevel(R_hated, 0.75);
+	PrintMatrixT<int>(Ra, "\nR, alpha = 0.75:\n");
+	BlockMatrix(Ra);
+	PrintMatrixT<int>(Ra, "\nBlock R :\n");
 
 	getchar();
     return 0;
