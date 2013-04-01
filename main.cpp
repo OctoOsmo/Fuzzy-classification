@@ -3,6 +3,104 @@
 #include <vector>
 #include <cmath>
 
+//////////////////////////////////////
+//@brief triangle fuzzy number set structure
+// a, b, c - left, middle and right values
+struct TriangleFuzzySet
+{
+	double a;
+	double b;
+	double c;
+	
+	//TriangleFuzySet(double a0, double b0, double c0)
+	//	:a(a0), b(b0), c(c0)
+	//{};
+	double MembershipVal(double x)
+	{
+		if(x <= a || x >= c)
+			return 0;
+		else if(x > a && x <= b) 
+			return (x - a)/(b - a);
+		else return -(x - b)/(c - b) + 1;
+
+		return 0 ;		
+	}
+};
+
+//////////////////////////////////////
+//@brief
+void LoadInputSets(std::vector<TriangleFuzzySet> &A, char *fname = "in.txt")
+{
+	FILE *f;
+	int N;
+	f = fopen(fname, "r");
+	fscanf(f, "%d", &N);
+	A.resize(N);
+
+	for(int i = 0; i < N; ++i)
+		fscanf(f, "%lf%lf%lf", &A[i].a, &A[i].b, &A[i].c);
+	
+	fclose(f);
+}
+
+//////////////////////////////////////
+//@brief Hemming distance between Triangle Fuzzy Sets A and B
+double Hemming(TriangleFuzzySet &A, TriangleFuzzySet &B)
+{
+	const int N = 1000;
+	
+	double x_min = std::min(A.a, B.a);
+	double x_max = std::max(A.c, B.c);
+	double h = (x_max - x_min)/(double)N;
+	
+	double s = 0;
+	for(double x = x_min; x <= x_max; x += h)
+    {
+        //double t = abs(A.MembershipVal(x) - B.MembershipVal(x));
+		s += abs(A.MembershipVal(x) - B.MembershipVal(x))*h;
+    }
+	double l = (x_max - x_min);
+
+	if(A.c <= B.a)
+		l -= B.a - A.c;
+	if(A.a >= B.c)
+		l -= A.a - B.c;
+
+    return s/l;
+}
+
+//////////////////////////////////////
+//@brief
+std::vector<std::vector<double> > HemmingMatrix(std::vector<TriangleFuzzySet> &A)
+{
+    int size = (int) A.size();
+    std::vector<std::vector<double> > R(size);
+    for(int i = 0; i < size; ++i)
+    {
+        R[i].resize(size);
+        for(int j = 0; j < size; ++j)
+        {
+            if(i < j)
+            {
+                R[i][j] = Hemming(A[i], A[j]);
+            }
+            else
+            {
+                if(i == j)
+                {
+                    R[i][j] = 0;
+                }
+                else
+                {
+                    R[i][j] = R[j][i];
+                }
+            }
+        }
+    }
+    return R;
+}
+
+
 std::vector<std::vector<double> > LoadInputMatrix(/*std::vector<std::vector<double> > &in*/)
 {
     std::vector<std::vector<double> > in;
@@ -33,20 +131,10 @@ void PrintMatrix(std::vector<std::vector<double> > &in, const char *str){
         printf("\n");
     }
 }
-//
-//void PrintMatrixd(std::vector<std::vector<int> > &M, const char *str)
-//{
-//	printf(str);
-//    for(int i = 0; i < M.size(); ++i)
-//    {
-//        for(int j = 0; j < M.size(); ++j)
-//        {
-//           std::cout << M[i][j] << " ";
-//        }
-//         std::cout << "\n";
-//    }
-//}
 
+
+//////////////////////////////////////
+//@brief
 template <class T> void PrintMatrixT(std::vector<std::vector<T> > &M, const char *str)
 {
 	std::cout << str;
@@ -56,10 +144,9 @@ template <class T> void PrintMatrixT(std::vector<std::vector<T> > &M, const char
         {
            std::cout << M[i][j] << " ";
         }
-         std::cout << "\n";
+        std::cout << "\n";
     }
 }
-
 
 double Hemming(std::vector<double> &A, std::vector<double> &B)
 {
@@ -100,7 +187,8 @@ std::vector<std::vector<double> > HemmingMatrix(std::vector<std::vector<double> 
     return R;
 }
 
-
+//////////////////////////////////////
+//@brief
 std::vector<std::vector<double> > MinMaxComposition(const std::vector<std::vector<double> > &R0, const std::vector<std::vector<double> > &R)
 {
 	std::vector<std::vector<double> > R_2(R.size());
@@ -124,6 +212,8 @@ std::vector<std::vector<double> > MinMaxComposition(const std::vector<std::vecto
 	return R_2;
 }
 
+//////////////////////////////////////
+//@brief compare of two double valued symetric matrix
 bool VecCmp(const std::vector<std::vector<double> > &R1, const std::vector<std::vector<double> > &R2)
 {
 	bool flag = true;
@@ -156,6 +246,8 @@ std::vector<std::vector<double> > MinMaxTransitiveClosure(const std::vector<std:
 	return R_TrCl;
 }
 
+//////////////////////////////////////
+//@brief
 void RelationNegation(std::vector<std::vector<double> > &R)
 {
 	for(int i = 0; i < R.size(); ++i)
@@ -163,6 +255,8 @@ void RelationNegation(std::vector<std::vector<double> > &R)
 			R[i][j] = 1 - R[i][j];
 }
 
+//////////////////////////////////////
+//@brief
 std::vector<std::vector<int> > AlphaLevel(const std::vector<std::vector<double> > &R, double alpha)
 {
 	int N = R.size();	
@@ -173,34 +267,29 @@ std::vector<std::vector<int> > AlphaLevel(const std::vector<std::vector<double> 
 		Falpha[i].resize(N, 0);
 		for(int j = 0; j < N; ++j)
 			if(R[i][j] >= alpha) Falpha[i][j] = 1;
+
 	}
 
 	return Falpha;
 }
 
-int GetNextOne(std::vector<int> v, int &k)
-{
-	int i = k;
-	while(v[i++] != 0 && i <= v.size());
-
-	if(i > v.size()) return -1;
-	else return i;
-
-}
-
+//////////////////////////////////////
+//@brief
 void RowColSwap(std::vector<std::vector<int> > &R, int i, int j)
 {
 	std::swap(R[i], R[j]);
 	for(int k = 0; k < R.size(); ++k)
 		std::swap(R[k][i], R[k][j]);
-
 }
 
 //////////////////////////////////////
 //@brief function making block matrix from matrix R
-void BlockMatrix(std::vector<std::vector<int> > &R)
+void BlockMatrix(std::vector<std::vector<int> > &R, std::vector<int> &tr)
 {
 	int N = R.size();
+	tr.resize(N);
+	for(int i = 0; i < N; ++i)
+		tr[i] = i;
 
 	int i0 = 0, i1, row = 0;
 	while(row < N - 2)
@@ -215,14 +304,66 @@ void BlockMatrix(std::vector<std::vector<int> > &R)
 			if(R[row][i1] == 1)
 			{
 				RowColSwap(R, i0, i1);
+				std::swap(tr[i0], tr[i1]);
 			}
 			else row = i0;
 			
 		} 
 		else row = i0;
 	}
+}
 
-	PrintMatrixT(R, "\nBlock matrix:\n");
+//////////////////////////////////////
+//@brief
+void PrintClasses(std::vector<std::vector<int> > &R, std::vector<int> &tr)
+{
+	int N = R.size();
+	int i = 0, ind = 0, k = 0;
+	
+	printf("\n\tClasses:\n");
+	while(i < N)
+	{
+		printf("L%d = { ", ind++);
+		//k = i;
+		while(k < N && R[i][k])
+		{
+			printf("%d ", tr[k]);
+			++k;
+		}
+		printf("}\n");
+		i = k;
+	}
+		
+}
+
+//////////////////////////////////////
+//@brief
+double GetNextMin(std::vector<std::vector<double> > &R, double cur_min)
+{
+	double min = 1;
+	for(int i = 0; i < R.size(); ++i)
+		for(int j = 0; j <= i; ++j)
+			if(R[i][j] > cur_min && R[i][j] < min)
+				min = R[i][j];
+	return min;
+}
+
+//////////////////////////////////////
+//@brief
+void FuzzyClassification(std::vector<std::vector<double> > &R)
+{
+	std::vector<int> tr;
+	std::vector<std::vector<int> > Ra;
+	double alpha = 0;
+	for(alpha = 0.5; alpha <= 0.9; alpha += 0.02)
+	{
+		Ra = AlphaLevel(R, alpha);
+		printf("\n\talpha = %lf", alpha);
+		//PrintMatrixT<int>(Ra, "\nR:\n");
+		BlockMatrix(Ra, tr);
+		PrintMatrixT<int>(Ra, "\nBlock R :\n");
+		PrintClasses(Ra, tr);
+	}
 }
 
 
@@ -230,26 +371,21 @@ void BlockMatrix(std::vector<std::vector<int> > &R)
 //@brief main
 int main (void)
 {
-    std::vector<std::vector<double> > in;
+    std::vector<TriangleFuzzySet> A;
     std::vector<std::vector<double> > R;
-	std::vector<std::vector<double> > R_hated;
-	std::vector<std::vector<int> > Ra;
+	std::vector<std::vector<double> > R_cl;
 
-    in = LoadInputMatrix();
-    PrintMatrix(in, "Source matrix:\n");
-    R = HemmingMatrix(in);
+    LoadInputSets(A);
+
+    R = HemmingMatrix(A);
     PrintMatrix(R, "\nMatrix R:\n");
 
-	R_hated = MinMaxTransitiveClosure(R);
-	PrintMatrix(R_hated, "\nMatrix transitive closure of R:\n");
+	R_cl = MinMaxTransitiveClosure(R);
+	PrintMatrix(R_cl, "\nMatrix transitive closure of R:\n");
 
-	RelationNegation(R_hated);
+	RelationNegation(R_cl);
 
-
-	Ra = AlphaLevel(R_hated, 0.75);
-	PrintMatrixT<int>(Ra, "\nR, alpha = 0.75:\n");
-	BlockMatrix(Ra);
-	PrintMatrixT<int>(Ra, "\nBlock R :\n");
+	FuzzyClassification(R_cl);
 
 	getchar();
     return 0;
