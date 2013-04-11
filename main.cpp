@@ -338,7 +338,10 @@ void PrintClasses(std::vector<std::vector<int> > &R, std::vector<int> &tr)
 {
 	int N = R.size();
 	int i = 0, ind = 0, k = 0;
-
+	//printf("\nPermutations of columns:\n");
+	for(int i = 0; i < tr.size(); ++i)
+		printf("%d ", tr[i]);
+	printf("\n");
 	printf("\n\tClasses:\n");
 	while(i < N)
 	{
